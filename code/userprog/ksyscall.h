@@ -132,6 +132,12 @@ void SysPrintString(char* buffer, int length) {
     }
 }
 
+void SysPrintStringUc(char* buffer, int length) {
+    for (int i = 0; i < length; i++) {
+        kernel->synchConsoleOut->PutChar(buffer[i] - ((buffer[i] >= 97 && buffer[i] <= 122) ? 32 : 0));
+    }
+}
+
 bool SysCreateFile(char* fileName) {
     bool success;
     int fileNameLength = strlen(fileName);
