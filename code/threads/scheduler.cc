@@ -22,6 +22,15 @@
 #include "debug.h"
 #include "scheduler.h"
 #include "main.h"
+#include <queue>
+#include <vector>
+
+class PriorityComp{
+public:
+	bool operator()(Thread* &t1, Thread* &t2){
+		return t1->processID > t2->processID;	
+	}
+};
 
 //----------------------------------------------------------------------
 // Scheduler::Scheduler
@@ -71,7 +80,25 @@ Thread *Scheduler::FindNextToRun() {
     if (readyList->IsEmpty()) {
         return NULL;
     } else {
-        return readyList->RemoveFront();
+	priority_queue<Thread*, vector<Thread*>, PriorityComp> schedulerPQ;
+	List<Thread*>* allProcesses = new List<Thread*>;
+	while(!readyList->IsEmpty()){
+		Thread* curThread = readyList->RemoveFront(); 
+		schedulerPQ.push(curThread);
+		allProcesses->Append(curThread);	
+	}
+
+	Thread* toRun = schedulerPQ.top(); schedulerPQ.pop();
+
+	while(!allProcesses->IsEmpty()){
+		Thread* x = allProcesses->RemoveFront();	
+		if(x != toRun) {
+			readyList->Append(x);
+		}
+	}
+
+
+        return toRun;
     }
 }
 
