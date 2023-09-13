@@ -71,6 +71,7 @@ void Timer::SetInterrupt() {
             delay = 1 + (RandomNumber() % (TimerTicks * 2));
         }
         // schedule the next timer device interrupt
+	printf("\n\nDelay: %d %d\n", delay, randomize);
         kernel->interrupt->Schedule(this, delay, TimerInt);
     }
 }
