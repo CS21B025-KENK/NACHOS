@@ -1,0 +1,9 @@
+Sysclass.h --> add definition
+Start.s --> Switch case
+userprog/exception.cc --> add handler
+userprog/ksyscall.h --> implemenation
+code/build.linux --> make clean --> make
+code/test --> make clean --> make
+if added new testcase --> update test/Makefile {testProgName} part and add in PROGRAMS
+nachos-projects --> bash build_nachos.sh build_test.sh
+code/build.linux --> ./nachos -x {testProgName}
