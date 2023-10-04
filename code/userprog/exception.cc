@@ -217,6 +217,16 @@ void handle_SC_PrintStringUc() {
     return move_program_counter();
 }
 
+void handle_SC_Sleep(){
+    int waitTicks = kernel->machine->ReadRegister(4);  // read address of C-string
+    kernel->alarm->WaitUntil(waitTicks);
+    auto currentState = kernel->interrupt->getLevel();
+    kernel->interrupt->SetLevel(IntOff);
+   kernel->currentThread->Sleep(false);
+   kernel->interrupt->SetLevel(currentState);
+    return move_program_counter();
+}
+
 void handle_SC_CreateFile() {
     int virtAddr = kernel->machine->ReadRegister(4);
     char* fileName = stringUser2System(virtAddr);
@@ -445,7 +455,9 @@ void ExceptionHandler(ExceptionType which) {
                 case SC_PrintString:
                     return handle_SC_PrintString();
 		case SC_PrintStringUc:
-		    return handle_SC_PrintStringUc();
+		    return handle_SC_PrintStringUc(); // osNACHOS-defined
+                case SC_Sleep:
+                    return handle_SC_Sleep(); // osNACHOS-defined
                 case SC_CreateFile:
                     return handle_SC_CreateFile();
                 case SC_Open:

@@ -49,6 +49,7 @@
 #define SC_Signal 53
 #define SC_GetPid 54
 #define SC_PrintStringUc 55
+#define SC_Sleep 56
 
 #ifndef IN_ASM
 
@@ -88,6 +89,8 @@ void PrintString(char *buffer);
 /* Print a string in uppercase */
 
 void PrintStringUc(char *buffer);
+
+void Sleep(int ticks);
 
 /* Address space control operations: Exit, Exec, Execv, and Join */
 
