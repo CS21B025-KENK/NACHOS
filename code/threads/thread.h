@@ -81,7 +81,7 @@ class Thread {
 
    public:
     Thread(char *debugName,
-           bool _has_dynamic_name = false);  // initialize a Thread
+           bool _has_dynamic_name = false);  		     // initialize a Thread
     ~Thread();                               // deallocate a Thread
                                              // NOTE -- thread being deleted
                                              // must not be running when delete
@@ -89,7 +89,9 @@ class Thread {
 
     int processID;
     int parrentID;
+    int priority;
     int exitStatus;
+    Thread *pThread;
     void FreeSpace() {
         if (space != 0) delete space;
     }
@@ -128,13 +130,14 @@ class Thread {
     // -- one for its state while executing user code, one for its state while
     // executing kernel code.
 
-    int userRegisters[NumTotalRegs];  // user-level CPU register state
 
    public:
+    int userRegisters[NumTotalRegs];  // user-level CPU register state
     void SaveUserState();     // save user-level register state
     void RestoreUserState();  // restore user-level register state
 
     AddrSpace *space;  // User code this thread is running.
+    bool isClone = false;
 };
 
 // external function, dummy routine whose sole job is to call Thread::Print

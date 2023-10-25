@@ -28,7 +28,7 @@
 class PriorityComp{
 public:
 	bool operator()(Thread* &t1, Thread* &t2){
-		return t1->processID > t2->processID;	
+		return t1->priority < t2->priority;	
 	}
 };
 
@@ -80,25 +80,28 @@ Thread *Scheduler::FindNextToRun() {
     if (readyList->IsEmpty()) {
         return NULL;
     } else {
-	priority_queue<Thread*, vector<Thread*>, PriorityComp> schedulerPQ;
-	List<Thread*>* allProcesses = new List<Thread*>;
-	while(!readyList->IsEmpty()){
-		Thread* curThread = readyList->RemoveFront(); 
-		schedulerPQ.push(curThread);
-		allProcesses->Append(curThread);	
-	}
+       /* priority_queue<Thread*, vector<Thread*>, PriorityComp> schedulerPQ;
+        List<Thread*>* allProcesses = new List<Thread*>;
+	//kernel->scheduler->ReadyToRun(kernel->currentThread);
+        while(!readyList->IsEmpty()){
+            Thread* curThread = readyList->RemoveFront(); 
+            schedulerPQ.push(curThread);
+            allProcesses->Append(curThread);	
+        }
 
-	Thread* toRun = schedulerPQ.top(); schedulerPQ.pop();
+        Thread* toRun = schedulerPQ.top(); schedulerPQ.pop();
 
-	while(!allProcesses->IsEmpty()){
-		Thread* x = allProcesses->RemoveFront();	
-		if(x != toRun) {
-			readyList->Append(x);
-		}
-	}
-
-
-        return toRun;
+        while(!allProcesses->IsEmpty()){
+            Thread* x = allProcesses->RemoveFront();	
+            if(x != toRun) {
+                readyList->Append(x);
+            }
+        }
+        //printf("\nCurrent Process is: %d\n", toRun->processID);
+	// printf("\nCurrent Process is: %s\n", toRun->getName());
+        //printf("Current process priority: %d\n", toRun->priority);
+        return toRun;*/
+	return readyList->RemoveFront();
     }
 }
 
