@@ -9,14 +9,20 @@
 
 int main() {
     int result;
-    int i,j;
+    int i,j,k;
+    k= 10;
+    	PrintString("Start\n");
+	i = VFork(1);
+	if(i == 0) {
+		k = 11;
+	}
+	PrintNum(i);
+	PrintString("\n");
+	PrintNum(k);
+	i = VFork(2);
+	PrintNum(i);
+	PrintString("\n");
+	PrintString("Completed\n");
 
-    result = Add(42, 27);
-    while(1) {
-	    for(i=0;i<1000;i++) 
-		    for(j=0;j<100;j++);
-	    PrintString("In Add\n");
-    }
-
-    /* not reached */
+//	while(1);
 }

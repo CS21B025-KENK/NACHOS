@@ -284,6 +284,14 @@ Signal:
 	j	$31
 	.end Signal
 
+	.globl VFork
+	.ent	VFork
+VFork:
+	addiu $2,$0,SC_VFork
+	syscall
+	j	$31
+	.end VFork
+
 	.globl GetPid
 	.ent	GetPid
 GetPid:
