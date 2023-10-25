@@ -28,6 +28,7 @@
 class Timer : public CallBackObj {
    public:
     Timer(bool doRandom, CallBackObj *toCall);
+    Timer(int ticks, CallBackObj *toCall);
     // Initialize the timer, and callback to "toCall"
     // every time slice.
     virtual ~Timer() {}
@@ -47,6 +48,7 @@ class Timer : public CallBackObj {
 
     void SetInterrupt();  // cause an interrupt to occur in the
                           // the future after a fixed or random
+    void SetDelayedInterrupt(int ticks); //cause an interrupt to occur in the future after the given number of ticks
     // delay
 };
 
