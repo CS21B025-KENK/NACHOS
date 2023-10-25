@@ -252,4 +252,10 @@ int SysSignal(char* name) {
 
 int SysGetPid() { return kernel->currentThread->processID; }
 
+
+int SysVFork()
+{
+	return kernel->pTab->ExecUpdate();
+}
+
 #endif /* ! __USERPROG_KSYSCALL_H__ */

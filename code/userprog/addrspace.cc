@@ -184,6 +184,47 @@ AddrSpace::AddrSpace(char *fileName) {
     return;
 }
 
+
+AddrSpace::AddrSpace(AddrSpace *parent)
+{
+	int i;
+    	unsigned int size;
+
+	kernel->addrLock->P();
+	this->numPages = parent->numPages;
+
+
+	size = this->numPages * PageSize;
+	ASSERT(numPages <= NumPhysPages);  // check we're not trying
+	if (this->numPages > kernel->gPhysPageBitMap->NumClear()) {
+		DEBUG(dbgAddr, "Not enough free space");
+		this->numPages = 0;
+		kernel->addrLock->V();
+		return;
+	}
+
+	pageTable = new TranslationEntry[numPages];
+	for (i = 0; i < this->numPages; i++) {
+		pageTable[i].virtualPage = i;
+		pageTable[i].physicalPage = kernel->gPhysPageBitMap->FindAndSet();
+		pageTable[i].valid = TRUE;
+		pageTable[i].use = FALSE;
+		pageTable[i].dirty = FALSE;
+		pageTable[i].readOnly = FALSE;
+		bzero(&(kernel->machine->mainMemory[pageTable[i].physicalPage * PageSize]), PageSize);
+		DEBUG(dbgAddr, "phyPage " << pageTable[i].physicalPage);
+	}
+
+	for (i = 0; i < numPages; i++) {
+		memcpy(&(kernel->machine->mainMemory[this->pageTable[i].physicalPage * PageSize]), 
+				&(kernel->machine->mainMemory[parent->pageTable[i].physicalPage * PageSize]), PageSize);
+	}
+
+
+	kernel->addrLock->V();
+
+}
+
 //----------------------------------------------------------------------
 // AddrSpace::Execute
 // 	Run a user program using the current thread
@@ -194,16 +235,18 @@ AddrSpace::AddrSpace(char *fileName) {
 //----------------------------------------------------------------------
 
 void AddrSpace::Execute() {
-    kernel->currentThread->space = this;
+	kernel->currentThread->space = this;
 
-    this->InitRegisters();  // set the initial register values
-    this->RestoreState();   // load page table register
+	if(kernel->currentThread->isClone == false) {
+		this->InitRegisters();  // set the initial register values
+	}
+	this->RestoreState();   // load page table register
 
-    kernel->machine->Run();  // jump to the user progam
+	kernel->machine->Run();  // jump to the user progam
 
-    ASSERTNOTREACHED();  // machine->Run never returns;
-                         // the address space exits
-                         // by doing the syscall "exit"
+	ASSERTNOTREACHED();  // machine->Run never returns;
+	// the address space exits
+	// by doing the syscall "exit"
 }
 
 //----------------------------------------------------------------------
@@ -217,26 +260,26 @@ void AddrSpace::Execute() {
 //----------------------------------------------------------------------
 
 void AddrSpace::InitRegisters() {
-    Machine *machine = kernel->machine;
-    int i;
+	Machine *machine = kernel->machine;
+	int i;
 
-    for (i = 0; i < NumTotalRegs; i++) machine->WriteRegister(i, 0);
+	for (i = 0; i < NumTotalRegs; i++) machine->WriteRegister(i, 0);
 
-    // Initial program counter -- must be location of "Start", which
-    //  is assumed to be virtual address zero
-    machine->WriteRegister(PCReg, 0);
+	// Initial program counter -- must be location of "Start", which
+	//  is assumed to be virtual address zero
+	machine->WriteRegister(PCReg, 0);
 
-    // Need to also tell MIPS where next instruction is, because
-    // of branch delay possibility
-    // Since instructions occupy four bytes each, the next instruction
-    // after start will be at virtual address four.
-    machine->WriteRegister(NextPCReg, 4);
+	// Need to also tell MIPS where next instruction is, because
+	// of branch delay possibility
+	// Since instructions occupy four bytes each, the next instruction
+	// after start will be at virtual address four.
+	machine->WriteRegister(NextPCReg, 4);
 
-    // Set the stack register to the end of the address space, where we
-    // allocated the stack; but subtract off a bit, to make sure we don't
-    // accidentally reference off the end!
-    machine->WriteRegister(StackReg, numPages * PageSize - 16);
-    DEBUG(dbgAddr, "Initializing stack pointer: " << numPages * PageSize - 16);
+	// Set the stack register to the end of the address space, where we
+	// allocated the stack; but subtract off a bit, to make sure we don't
+	// accidentally reference off the end!
+	machine->WriteRegister(StackReg, numPages * PageSize - 16);
+	DEBUG(dbgAddr, "Initializing stack pointer: " << numPages * PageSize - 16);
 }
 
 //----------------------------------------------------------------------
@@ -258,8 +301,8 @@ void AddrSpace::SaveState() {}
 //----------------------------------------------------------------------
 
 void AddrSpace::RestoreState() {
-    kernel->machine->pageTable = pageTable;
-    kernel->machine->pageTableSize = numPages;
+	kernel->machine->pageTable = pageTable;
+	kernel->machine->pageTableSize = numPages;
 }
 
 //----------------------------------------------------------------------
@@ -271,41 +314,41 @@ void AddrSpace::RestoreState() {
 //  Return any exceptions caused by the address translation.
 //----------------------------------------------------------------------
 ExceptionType AddrSpace::Translate(unsigned int vaddr, unsigned int *paddr,
-                                   int isReadWrite) {
-    TranslationEntry *pte;
-    int pfn;
-    unsigned int vpn = vaddr / PageSize;
-    unsigned int offset = vaddr % PageSize;
+		int isReadWrite) {
+	TranslationEntry *pte;
+	int pfn;
+	unsigned int vpn = vaddr / PageSize;
+	unsigned int offset = vaddr % PageSize;
 
-    if (vpn >= numPages) {
-        return AddressErrorException;
-    }
+	if (vpn >= numPages) {
+		return AddressErrorException;
+	}
 
-    pte = &pageTable[vpn];
+	pte = &pageTable[vpn];
 
-    if (isReadWrite && pte->readOnly) {
-        return ReadOnlyException;
-    }
+	if (isReadWrite && pte->readOnly) {
+		return ReadOnlyException;
+	}
 
-    pfn = pte->physicalPage;
+	pfn = pte->physicalPage;
 
-    // if the pageFrame is too big, there is something really wrong!
-    // An invalid translation was loaded into the page table or TLB.
-    if (pfn >= NumPhysPages) {
-        DEBUG(dbgAddr, "Illegal physical page " << pfn);
-        return BusErrorException;
-    }
+	// if the pageFrame is too big, there is something really wrong!
+	// An invalid translation was loaded into the page table or TLB.
+	if (pfn >= NumPhysPages) {
+		DEBUG(dbgAddr, "Illegal physical page " << pfn);
+		return BusErrorException;
+	}
 
-    pte->use = TRUE;  // set the use, dirty bits
+	pte->use = TRUE;  // set the use, dirty bits
 
-    if (isReadWrite) pte->dirty = TRUE;
+	if (isReadWrite) pte->dirty = TRUE;
 
-    *paddr = pfn * PageSize + offset;
+	*paddr = pfn * PageSize + offset;
 
-    ASSERT((*paddr < MemorySize));
+	ASSERT((*paddr < MemorySize));
 
-    // cerr << " -- AddrSpace::Translate(): vaddr: " << vaddr <<
-    //  ", paddr: " << *paddr << "\n";
+	// cerr << " -- AddrSpace::Translate(): vaddr: " << vaddr <<
+	//  ", paddr: " << *paddr << "\n";
 
-    return NoException;
+	return NoException;
 }

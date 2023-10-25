@@ -163,6 +163,7 @@ void handle_SC_ReadNum() {
 void handle_SC_PrintNum() {
     int character = kernel->machine->ReadRegister(4);
     SysPrintNum(character);
+    printf("\n");
     return move_program_counter();
 }
 
@@ -220,8 +221,7 @@ void handle_SC_PrintStringUc() {
 void handle_SC_Sleep(){
     int waitTicks = kernel->machine->ReadRegister(4);  // read address of C-string
     kernel->alarm->WaitUntil(waitTicks);
-    auto currentState = kernel->interrupt->getLevel();
-    kernel->interrupt->SetLevel(IntOff);
+    auto currentState = kernel->interrupt->SetLevel(IntOff);
    kernel->currentThread->Sleep(false);
    kernel->interrupt->SetLevel(currentState);
     return move_program_counter();
@@ -303,6 +303,22 @@ void handle_SC_Seek() {
 
     kernel->machine->WriteRegister(2, SysSeek(seekPos, fileId));
 
+    return move_program_counter();
+}
+
+
+void handle_SC_VFork()
+{
+    int x = kernel->machine->ReadRegister(4);
+	printf("FC  %d %d %d -- %d\n", kernel->currentThread->processID, kernel->currentThread->parrentID, x, kernel->machine->ReadRegister(PCReg));
+    if(kernel->currentThread->isClone == true) {
+	kernel->currentThread->isClone = false;
+	kernel->machine->WriteRegister(2, 0);
+    } else {
+	int pid = SysVFork();
+	kernel->machine->WriteRegister(2, pid);
+    }
+	
     return move_program_counter();
 }
 
@@ -499,6 +515,9 @@ void ExceptionHandler(ExceptionType which) {
                 case SC_ThreadExit:
                 case SC_ThreadJoin:
                     return handle_not_implemented_SC(type);
+
+		case SC_VFork:
+		    return handle_SC_VFork();
 
                 default:
                     cerr << "Unexpected system call " << type << "\n";
