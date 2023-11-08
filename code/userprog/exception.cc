@@ -429,6 +429,22 @@ void handle_SC_GetPid() {
     return move_program_counter();
 }
 
+void handle_SC_PageFaultException(){
+	kernel->addrLock->P();
+	int missedVAddr = kernel->machine->registers[BadVAddrReg]; // the virtual mem addr we require
+	
+	int vpn = (unsigned int)(missedVAddr/PageSize); // virtual page number
+	NoffHeader noffH = kernel->currentThread->noffH;
+
+        kernel->currentThread->space->pageTable[vpn].physicalPage = kernel->gPhysPageBitMap->FindAndSet();
+        kernel->currentThread->space->pageTable[vpn].valid = TRUE;
+        kernel->currentThread->executable->ReadAt(
+		&(kernel->machine->mainMemory[noffH.code.virtualAddr]) +
+                    (kernel->currentThread->space->pageTable[vpn].physicalPage * PageSize),
+                PageSize, noffH.code.inFileAddr + (vpn * PageSize));
+	kernel->addrLock->V();
+}
+
 void ExceptionHandler(ExceptionType which) {
     int type = kernel->machine->ReadRegister(2);
 
@@ -440,6 +456,7 @@ void ExceptionHandler(ExceptionType which) {
             DEBUG(dbgSys, "Switch to system mode\n");
             break;
         case PageFaultException:
+	    return handle_SC_PageFaultException();
         case ReadOnlyException:
         case BusErrorException:
         case AddressErrorException:

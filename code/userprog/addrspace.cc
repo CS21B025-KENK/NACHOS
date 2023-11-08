@@ -19,7 +19,6 @@
 #include "main.h"
 #include "addrspace.h"
 #include "machine.h"
-#include "noff.h"
 #include "synch.h"
 
 //----------------------------------------------------------------------
@@ -103,6 +102,7 @@ AddrSpace::~AddrSpace() {
 
 AddrSpace::AddrSpace(char *fileName) {
     OpenFile *executable = kernel->fileSystem->Open(fileName);
+
     NoffHeader noffH;
     unsigned int i, size, j, offset;
     unsigned int numCodePage,
@@ -148,22 +148,26 @@ AddrSpace::AddrSpace(char *fileName) {
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i;  // for now, virtual page # = phys page #
-        pageTable[i].physicalPage = kernel->gPhysPageBitMap->FindAndSet();
+        // pageTable[i].physicalPage = kernel->gPhysPageBitMap->FindAndSet();
         // cerr << pageTable[i].physicalPage << endl;
-        pageTable[i].valid = TRUE;
+        pageTable[i].valid = FALSE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
         pageTable[i].readOnly = FALSE;  // if the code segment was entirely on
         // a separate page, we could set its
         // pages to be read-only
         // xóa các trang này trên memory
-        bzero(&(kernel->machine
-                    ->mainMemory[pageTable[i].physicalPage * PageSize]),
-              PageSize);
-        DEBUG(dbgAddr, "phyPage " << pageTable[i].physicalPage);
+        //bzero(&(kernel->machine
+          //          ->mainMemory[pageTable[i].physicalPage * PageSize]),
+            //  PageSize);
+       // DEBUG(dbgAddr, "phyPage " << pageTable[i].physicalPage);
     }
 
+    kernel->currentThread->noffH = noffH;
+    kernel->currentThread->executable = executable;
+/*
     if (noffH.code.size > 0) {
+        printf("inside code\n");
         for (i = 0; i < numPages; i++)
             executable->ReadAt(
                 &(kernel->machine->mainMemory[noffH.code.virtualAddr]) +
@@ -172,15 +176,16 @@ AddrSpace::AddrSpace(char *fileName) {
     }
 
     if (noffH.initData.size > 0) {
+        printf("inside data");
         for (i = 0; i < numPages; i++)
             executable->ReadAt(
                 &(kernel->machine->mainMemory[noffH.initData.virtualAddr]) +
                     (pageTable[i].physicalPage * PageSize),
                 PageSize, noffH.initData.inFileAddr + (i * PageSize));
-    }
+    }*/
 
     kernel->addrLock->V();
-    delete executable;
+//    delete executable;
     return;
 }
 
