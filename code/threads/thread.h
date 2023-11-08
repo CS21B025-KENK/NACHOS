@@ -40,7 +40,6 @@
 #include "copyright.h"
 #include "utility.h"
 #include "sysdep.h"
-
 #include "machine.h"
 #include "addrspace.h"
 
@@ -95,6 +94,10 @@ class Thread {
     void FreeSpace() {
         if (space != 0) delete space;
     }
+
+    // for demand paging
+    OpenFile* executable; // to get the file
+    NoffHeader noffH; // to get code process details
 
     // basic thread operations
 

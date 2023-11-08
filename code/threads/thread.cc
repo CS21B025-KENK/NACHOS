@@ -42,6 +42,7 @@ Thread::Thread(char *threadName, bool _has_dynamic_name /*=false*/) {
     stack = NULL;
     pThread = NULL;
     status = JUST_CREATED;
+    executable = (OpenFile*)malloc(sizeof(OpenFile));
     for (int i = 0; i < MachineStateSize; i++) {
         machineState[i] = NULL;  // not strictly necessary, since
                                  // new thread ignores contents
