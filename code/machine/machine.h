@@ -114,7 +114,7 @@ class Machine {
 
     char *mainMemory;  // physical memory to store user program,
                        // code and data, while executing
-
+    char *swapSpace; // place to store the swapped out pages KENK 
     // NOTE: the hardware translation of virtual addresses in the user program
     // to physical addresses (relative to the beginning of "mainMemory")
     // can be controlled by one of:
@@ -145,10 +145,11 @@ class Machine {
     // Read or write 1, 2, or 4 bytes of virtual
     // memory (at addr).  Return FALSE if a
     // correct translation couldn't be found.
-   private:
+    int registers[NumTotalRegs];  // CPU registers, for executing user programs
     // Routines internal to the machine simulation -- DO NOT call these directly
     void DelayedLoad(int nextReg, int nextVal);
     // Do a pending delayed load (modifying a reg)
+   private:
 
     void OneInstruction(Instruction *instr);
     // Run one instruction of a user program.
@@ -170,7 +171,6 @@ class Machine {
 
     // Internal data structures
 
-    int registers[NumTotalRegs];  // CPU registers, for executing user programs
 
     bool singleStep;   // drop back into the debugger after each
                        // simulated instruction
